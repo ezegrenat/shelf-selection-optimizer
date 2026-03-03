@@ -168,11 +168,3 @@ Cada clave es un par `(rack, cara)` y el valor es la lista de órdenes asignadas
 
 El notebook lee `backlog.json` y `stock_v2.json` desde una subcarpeta `data/` relativa a donde esté el notebook. `stock_v2.json` es la copia de trabajo del stock que se va consumiendo a medida que avanza la simulación.
 
-
-
-Para correr la simulación desde cero, repetír el último `cp` para restaurar el stock original:
-> ```bash
-mkdir data
-cp backlog.json data/backlog.json
-cp stock.json   data/stock_v2.json
-```
