@@ -1,55 +1,35 @@
 # Diseño de un Módulo de Shelf Selection (SS) para un Sistema Robótico Goods-to-Person (G2P)
 
-Implementación del módulo de **Shelf Selection (SS)** para un sistema **"Goods-to-Person" (G2P)** de fulfillment. El modelo asigna órdenes de picking a caras de racks móviles maximizando la densidad de picking, minimizando el costo de movimiento de robots y priorizando el cumplimiento de SLAs. Lo resuelvo con **Programación Lineal Entera Binaria** usando PuLP + CBC.
+Implementación del módulo de Shelf Selection (SS) para un sistema "Goods-to-Person" (G2P) de fulfillment. El modelo asigna órdenes de picking a caras de racks móviles maximizando la densidad de picking, minimizando el costo de movimiento de robots y priorizando el cumplimiento de SLAs. Lo resuelvo con programación lineal entera ninaria usando PuLP + CBC.  
 
 <img width="906" height="595" alt="imagen" src="https://github.com/user-attachments/assets/d0786334-9d70-40a3-a287-518d1d8d6d57" />
+
+>   Notar que, además de modelar este problema con Programación Lineal Entera, podría ser muy interesante abordarlo con metaheurísticas. De esta forma se podría sacrificar optimalidad en las asignaciones a cambio de velocidad, algo que podría ser ideal en casos específicos del negocio.
+
+> Este proyecto fue hecho como trabajo final para la materia "optimización en logística" (FCEN-UBA. 2c 2025). Los datos -tanto el backlog como el stock) si bien son representativos de un caso real son ficticios y fueron provistos por la cátedra. 
 
 ---
 
 ## Resumen del problema
 
-En un centro de distribución con tecnología G2P, robots autónomos traen racks completos hasta las estaciones de trabajo donde los operarios realizan el picking. El software se organiza en tres capas: **WMS** (inventario), **WES** (optimización en tiempo real) y **RCS** (control de robots).
+En un centro de distribución con tecnología G2P, robots autónomos traen racks completos hasta las estaciones de trabajo donde los operarios realizan el picking. El software se organiza en tres capas: WMS (inventario), WES (optimización en tiempo real) y RCS (control de robots).
 
 El módulo SS vive dentro del WES y se ejecuta cada 5 minutos. En cada ciclo recibe:
 - Las órdenes creadas en esa ventana de 5 minutos.
 - Las órdenes pendientes del ciclo anterior (que el SS no pudo asignar).
-- Las órdenes que el **Task Manager (TM)** no pudo procesar en el ciclo anterior (prioridad máxima).
+- Las órdenes que el Task Manager (TM) no pudo procesar en el ciclo anterior (prioridad máxima).
 - Un parámetro `N`: cantidad máxima de órdenes que el pool puede contener.
-Y devuelve un **pool de asignaciones**: qué órdenes van a qué cara de qué rack.
+Y devuelve un pool de asignaciones: qué órdenes van a qué cara de qué rack.
 
 El objetivo es hacer el mayor número de asignaciones posible concentrándolas en pocas caras de rack (más picks por cada vez que un robot mueve un rack), prefiriendo racks que ya estuvieron en uso recientemente (tibios) sobre los que llevan tiempo sin usarse (fríos), y evitando que se venzan órdenes con due date próximo.
 
 ---
 
-## Formulación del modelo
-
-### Conjuntos e índices
-
-| Símbolo | Descripción |
-|---|---|
-| `O` | Órdenes en la ventana actual |
-| `O_TM` ⊆ O | Órdenes que el TM no procesó en el ciclo anterior |
-| `C` | Caras de cada rack (1 a 4) |
-| `R` | Racks con stock relevante para esta ventana |
-| `P` | Productos referenciados en las órdenes de la ventana |
-
-### Parámetros de entrada
-
-| Símbolo | Descripción |
-|---|---|
-| `S[r][c][p]` | Stock del producto `p` en la cara `c` del rack `r` |
-| `δ[o][p]` | 1 si la orden `o` requiere el producto `p`, 0 si no (cada orden pide un solo producto en este dataset) |
-| `racksFrios` | Conjunto de racks con `estado_racks[r] == -3` (sin uso reciente) |
-| `racksTibios` | Conjunto de racks con `estado_racks[r] ∈ {0, -1, -2}` |
-| `N` | Máximo de órdenes procesables en el pool |
-| `Fec_o` | Penalización por SLA de la orden `o` según minutos hasta su due date |
-
 ### Variables de decisión, función objetivo y restricciones modeladas con programación lineal entera: 
 están presentes en shelf-selection_formulacion.pdf
 
-### Modelo térmico de racks
-
-Mantengo un vector global `estado_racks` de longitud 2089 (total de racks en el stock) que persiste entre ciclos:
+### Modelo térmico de racks: Es la forma que tiene el modelo para, mas allá de hacer asignaciones validas, favorecer asignaciones que den lugar a un tránsito ordenado de los robots en el deposito.
+ Mantengo un vector global `estado_racks` de longitud 2089 (total de racks en el stock) que persiste entre ciclos:
 
 - Se inicializa en `-3` (todos fríos).
 - Si el rack fue usado en el ciclo: `estado_racks[r] = 0`.
@@ -132,7 +112,7 @@ WES()
 }
 ```
 
-390.855 órdenes generadas a lo largo de un día (2025-10-09). Cada orden pide exactamente 1 unidad de 1 producto. Los `cpt_hours` son los horarios de corte de promesas del día.
+Un poco mas de 390.000 órdenes generadas a lo largo de un día (2025-10-09). Cada orden pide exactamente 1 unidad de 1 producto. Los `cpt_hours` son los horarios de corte de promesas del día.
 
 ### `stock.json` / `stock_v2.json`
 
@@ -162,12 +142,22 @@ WES()
 
 Cada clave es un par `(rack, cara)` y el valor es la lista de órdenes asignadas a esa cara.
 
+
 ---
-
-> Este código fue hecho como trabajo final para la materia "optimización en logística" (FCEN-UBA. 2c 2025). Los datos -tanto el backlog como el stock) son ficticios y fueron provistos por la cátedra. 
-
 
 ### Preparación de datos
 
 El notebook lee `backlog.json` y `stock_v2.json` desde una subcarpeta `data/` relativa a donde esté el notebook. `stock_v2.json` es la copia de trabajo del stock que se va consumiendo a medida que avanza la simulación.
+
+---
+
+## Aspectos de implementación 
+Notar que la creación de variables busca considerar solo combinaciones posibles para la ventana que se está trabajando, comparado a una "implementación naive" en la cual creamos todas las combinaciones posibles. La formulación naive instancia el tensor completo A[O][C][R][P], pero la mayoría de esas combinaciones nunca podrían valer 1: la orden o pide un producto específico, y ese producto solo existe en algunos racks y caras. Crear todas las variables desperdiciaría memoria y haría mucho mas lento al solver.
+
+Por lo tanto, lo que se hizo fue construir primero el conjunto de tuplas (o, c, r, p) realmente factibles cruzando el backlog con el stock, y crear solo esas variables:
+
+  A = {t: LpVariable(...) for t in indices}
+
+En la misma línea, se podaron los racks que no contienen ningún producto requerido por la ventana actual, reduciendo R a solo los racks relevantes para cada ciclo.
+
 
