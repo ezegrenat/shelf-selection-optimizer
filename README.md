@@ -44,69 +44,8 @@ El objetivo es hacer el mayor número de asignaciones posible concentrándolas e
 | `N` | Máximo de órdenes procesables en el pool |
 | `Fec_o` | Penalización por SLA de la orden `o` según minutos hasta su due date |
 
-### Variables de decisión
-
-| Variable | Tipo | Descripción |
-|---|---|---|
-| `A[o][c][r][p]` | binaria | 1 si la orden `o` se asigna a la cara `c` del rack `r` para el producto `p` |
-| `B[c][r]` | binaria | 1 si la cara `c` del rack `r` es activada en este ciclo |
-| `F[r]` | binaria | 1 si el rack `r` (frío) es utilizado |
-| `T[r]` | binaria | 1 si el rack `r` (tibio) es utilizado |
-
-
-### Función objetivo
-
-Maximizar:
-
-```
-16 · Σ A[o][c][r][p]   (o ∈ O_TM)     ← órdenes TM pendientes (prioridad máxima)
-+ 8 · Σ A[o][c][r][p]  (o ∉ O_TM)     ← resto de órdenes de la ventana
--     Σ B[c][r]                         ← penalización por caras usadas (incentiva PPF)
-- 5 · Σ F[r]                            ← penalización por racks fríos usados
-- 3 · Σ T[r]                            ← penalización por racks tibios usados
-- (SLA_total - SLA_realizado)            ← penalización SLA por órdenes no asignadas
-```
-
-Donde `SLA_total = Σ Fec_o` y `SLA_realizado = Σ Fec_o · A[o]`, de forma que solo penaliza las órdenes que **no** fueron asignadas.
-
-La función de penalización SLA:
-
-```
-Fec_o(t) = M                       si t ≤ 5 min  (vencimiento inminente → costo enorme)
-         = α · e^(-(t-5)/w)        si t > 5 min
-```
-
-Con `M = 1e11`, `α = 0.5`, `w = 4` (parámetros en `fec_o()` del notebook principal).
-
-### Restricciones
-
-1. **Stock:** Para cada cara `c`, rack `r` y producto `p`, la cantidad total asignada no puede superar el stock disponible.
-   ```
-   Σ_o A[o][c][r][p] ≤ S[r][c][p]    ∀ c, r, p
-   ```
-
-2. **Una asignación por orden:** Cada orden solo puede ir a un lugar.
-   ```
-   Σ_{c,r,p} A[o][c][r][p] ≤ 1       ∀ o
-   ```
-
-3. **Capacidad del pool:** El total de asignaciones no puede superar `N`.
-   ```
-   Σ_{o,c,r,p} A[o][c][r][p] ≤ N
-   ```
-
-4. **Activación de cara:** Si una orden se asigna a una cara, esa cara queda activada.
-   ```
-   A[o][c][r][p] ≤ B[c][r]            ∀ o, c, r
-   ```
-
-5. **Activación de rack frío:** `F[r]` vale 1 si y solo si alguna cara del rack está activa (para `r ∈ racksFrios`).
-   ```
-   Σ_c B[c][r] ≤ 4 · F[r]
-   F[r] ≤ Σ_c B[c][r]
-   ```
-
-6. **Activación de rack tibio:** Igual que la anterior pero para `r ∈ racksTibios` con `T[r]`.
+### Variables de decisión, función objetivo y restricciones modeladas con programación lineal entera: 
+están presentes en shelf-selection_formulacion.pdf
 
 ### Modelo térmico de racks
 
@@ -116,7 +55,6 @@ Mantengo un vector global `estado_racks` de longitud 2089 (total de racks en el 
 - Si el rack fue usado en el ciclo: `estado_racks[r] = 0`.
 - Si no fue usado: `estado_racks[r] = max(-3, estado_racks[r] - 1)`.
 - Clasificación: frío si `== -3`, tibio si `∈ {0, -1, -2}`.
-
 Esto modela el "enfriamiento" gradual: un rack que se deja de usar baja de tibio a frío en 3 ciclos (≈ 15 minutos).
 
 
@@ -128,9 +66,9 @@ Esto modela el "enfriamiento" gradual: un rack que se deja de usar baja de tibio
 - `SS(N, df, estado_racks, total_no_procesadas_tm)`: arma y resuelve el modelo PLE. Actualiza `stock_v2.json` y `estado_racks`. Devuelve pool, DataFrames de asignadas/pendientes y KPIs.
 - `simular_pendientes_tm(asignadas_df)`: simula aleatoriamente qué órdenes no procesó el TM.
 - `WES()`: orquesta la simulación completa de 24 horas en ventanas de 5 minutos. Imprime KPIs al final.
-
-**`backlog.json`**                     ← representación del backlog 
-**`stock.json`**                       ← representación del stock 
+**`backlog.json`**                   : representación del backlog 
+**`backlog.json`**                     : representación del backlog 
+**`shelf-selection_formulacion.pdf`**                       : modelo de programación lineal entera utilizado para hacer las asignaciones.
 
 ---
 
@@ -226,49 +164,15 @@ Cada clave es un par `(rack, cara)` y el valor es la lista de órdenes asignadas
 
 ---
 
-## Cómo correr el proyecto
-
-### Requisitos
-
-- Python 3.9+
-- Jupyter Notebook o JupyterLab
-
-```
-pulp>=3.3.0
-numpy
-pandas
-```
-
-El solver CBC viene incluido con PuLP y no requiere instalación separada.
-
-### Instalación
-
-```bash
-git clone <url-del-repo>
-cd <nombre-del-repo>
-
-python -m venv .venv
-source .venv/bin/activate   # Windows: .venv\Scripts\activate
-
-pip install pulp numpy pandas jupyter
-```
-
 ### Preparación de datos
 
 El notebook lee `backlog.json` y `stock_v2.json` desde una subcarpeta `data/` relativa a donde esté el notebook. `stock_v2.json` es la copia de trabajo del stock que se va consumiendo a medida que avanza la simulación.
 
-```bash
+
+
+Para correr la simulación desde cero, repetír el último `cp` para restaurar el stock original:
+> ```bash
 mkdir data
 cp backlog.json data/backlog.json
 cp stock.json   data/stock_v2.json
 ```
-
-> Si querés volver a correr la simulación desde cero, repetí el último `cp` para restaurar el stock original.
-
-### Ejecución
-
-```bash
-jupyter notebook optimizacion.ipynb
-```
-
-Ejecutar todas las celdas en orden. La última celda (`WES()`) corre la simulación completa de 24 horas e imprime los KPIs al final.
