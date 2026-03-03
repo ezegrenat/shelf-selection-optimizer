@@ -38,6 +38,7 @@ Es la forma que tiene el modelo para, mas allá de hacer asignaciones validas, f
 - Clasificación: frío si `== -3`, tibio si `∈ {0, -1, -2}`.
 Esto modela el "enfriamiento" gradual: un rack que se deja de usar baja de tibio a frío en 3 ciclos (≈ 15 minutos).
 
+---
 
 ### Archivos clave
 
