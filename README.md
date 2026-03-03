@@ -28,7 +28,8 @@ El objetivo es hacer el mayor número de asignaciones posible concentrándolas e
 ### Variables de decisión, función objetivo y restricciones modeladas con programación lineal entera: 
 están presentes en shelf-selection_formulacion.pdf
 
-### Modelo térmico de racks: Es la forma que tiene el modelo para, mas allá de hacer asignaciones validas, favorecer asignaciones que den lugar a un tránsito ordenado de los robots en el deposito.
+### Modelo térmico de racks: 
+Es la forma que tiene el modelo para, mas allá de hacer asignaciones validas, favorecer asignaciones que den lugar a un tránsito ordenado de los robots en el deposito.
  Mantengo un vector global `estado_racks` de longitud 2089 (total de racks en el stock) que persiste entre ciclos:
 
 - Se inicializa en `-3` (todos fríos).
