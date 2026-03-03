@@ -1,7 +1,8 @@
 # Diseño de un Módulo de Shelf Selection (SS) para un Sistema Robótico Goods-to-Person (G2P)
 
-Implemento el módulo de **Shelf Selection (SS)** para un sistema **Goods-to-Person (G2P)** de fulfillment. El modelo asigna órdenes de picking a caras de racks móviles maximizando la densidad de picking, minimizando el costo de movimiento de robots y priorizando el cumplimiento de SLAs. Lo resuelvo con **Programación Lineal Entera Binaria** usando PuLP + CBC.
+Implementación del módulo de **Shelf Selection (SS)** para un sistema **"Goods-to-Person" (G2P)** de fulfillment. El modelo asigna órdenes de picking a caras de racks móviles maximizando la densidad de picking, minimizando el costo de movimiento de robots y priorizando el cumplimiento de SLAs. Lo resuelvo con **Programación Lineal Entera Binaria** usando PuLP + CBC.
 
+<img width="906" height="595" alt="imagen" src="https://github.com/user-attachments/assets/d0786334-9d70-40a3-a287-518d1d8d6d57" />
 
 ---
 
