@@ -6,7 +6,7 @@ Implementación del módulo de Shelf Selection (SS) para un sistema "Goods-to-Pe
 
 >   Notar que, además de modelar este problema con Programación Lineal Entera, podría ser muy interesante abordarlo con metaheurísticas. De esta forma se podría sacrificar optimalidad en las asignaciones a cambio de velocidad, algo que podría ser ideal en casos específicos del negocio.
 
-> Este proyecto fue hecho como trabajo final para la materia "optimización en logística" (FCEN-UBA. 2c 2025). Los datos -tanto el backlog como el stock) si bien son representativos de un caso real son ficticios y fueron provistos por la cátedra. 
+> Este proyecto fue hecho como trabajo final para la materia "optimización en logística" (FCEN-UBA. 2c 2025). Los datos -tanto el backlog como el stock- si bien son representativos de un caso real son ficticios y fueron provistos por la cátedra. 
 
 ---
 
