@@ -28,7 +28,7 @@ El objetivo es hacer el mayor número de asignaciones posible concentrándolas e
 ### Variables de decisión, función objetivo y restricciones modeladas con programación lineal entera: 
 están presentes en shelf-selection_formulacion.pdf
 
-### Modelo térmico de racks: 
+### Modelo térmico de racks
 Es la forma que tiene el modelo para, mas allá de hacer asignaciones validas, favorecer asignaciones que den lugar a un tránsito ordenado de los robots en el deposito.
  Mantengo un vector global `estado_racks` de longitud 2089 (total de racks en el stock) que persiste entre ciclos:
 
@@ -47,9 +47,13 @@ Esto modela el "enfriamiento" gradual: un rack que se deja de usar baja de tibio
 - `SS(N, df, estado_racks, total_no_procesadas_tm)`: arma y resuelve el modelo PLE. Actualiza `stock_v2.json` y `estado_racks`. Devuelve pool, DataFrames de asignadas/pendientes y KPIs.
 - `simular_pendientes_tm(asignadas_df)`: simula aleatoriamente qué órdenes no procesó el TM.
 - `WES()`: orquesta la simulación completa de 24 horas en ventanas de 5 minutos. Imprime KPIs al final.
-**`backlog.json`**                   : representación del backlog 
-**`backlog.json`**                     : representación del backlog 
-**`shelf-selection_formulacion.pdf`**                       : modelo de programación lineal entera utilizado para hacer las asignaciones.
+
+
+**`backlog.json`** - representación del backlog 
+
+**`backlog.json`**  - representación del backlog 
+
+**`shelf-selection_formulacion.pdf`** - modelo de programación lineal entera utilizado para hacer las asignaciones.
 
 ---
 
